@@ -1,0 +1,94 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  MAKER
+  DISTRIBUTOR
+  DILER 
+}
+
+model User {
+  id              Int           @default(autoincrement()) @id
+  name            String
+  lastname        String
+  surname         String
+  legalAddress    String
+  contactNumber   String       @unique
+  country         String?
+  paymentAccount  String       @unique
+  BIK             String       @unique
+  KPP             String       @unique
+  INN             String       @unique
+  role            Role
+
+  products        Product[]     @relation("MakerProducts")
+  warehouses      Warehouse[]
+  makerCheck      Check[]       @relation("Maker")
+  distributorCheck Check[]       @relation("Distributor")
+  dilerCheck      Check[]       @relation("Diler")
+}
+
+model Product {
+  id               Int              @default(autoincrement()) @id
+  name             String
+  price            Int
+  makerId          Int
+  maker            User             @relation("MakerProducts", fields: [makerId], references: [id])
+
+  characteristics  Characteristic[]
+
+  checks           Check[]
+}
+
+model Characteristic {
+  id               Int              @default(autoincrement()) @id
+  name             String
+  value            String
+  productId        Int
+  product          Product          @relation(fields: [productId], references: [id])
+}
+
+enum CheckType {
+  RECEPTION
+  SALE
+}
+
+model Check {
+  id               Int              @default(autoincrement()) @id
+  productQuantity  Int
+  date             DateTime         @default(now())
+
+  productId        Int
+  product          Product          @relation(fields: [productId], references: [id])
+
+  distributorId    Int
+  distributor      User             @relation("Distributor",fields: [distributorId], references: [id])
+
+  makerId          Int?
+  maker            User?             @relation("Maker",fields: [makerId], references: [id])
+
+  dilerId          Int?
+  diler            User?             @relation("Diler",fields: [dilerId], references: [id])
+
+  type             CheckType
+}
+
+model Warehouse {
+  id               Int              @default(autoincrement()) @id
+  name             String
+  address          String
+  distributorId    Int
+  distributor      User             @relation(fields: [distributorId], references: [id])
+}
